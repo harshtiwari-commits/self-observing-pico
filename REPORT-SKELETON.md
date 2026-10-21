@@ -62,43 +62,57 @@ Fixture: median 0 counts, min 0, max 0, **σ = 0.00 over 1000 events** → timer
 byte-perfect on the host — on-chip (GP4) and, with the breadboard link, through the
 physical wire (GP5). 【FILL: confirm GP5 decode line from final demo run】
 
-### 5.4 The 13-cell study 【FILL from study-out/study_summary.csv】
+### 5.4 The 13-cell study (run 2026-10-21, firmware v5-cells, n = 2000/cell)
 | Cell | p50 | p95 | max |
 |---|---|---|---|
-| s1-usb-off | | | |
-| s1-usb-25M | | | |
-| s1-usb-62M | | | |
-| s1-floop-off | | | |
-| s1-rloop-off | | | |
-| s1-thrash-off | | | |
-| s2-usb-off | | | |
-| s2-usb-25M | | | |
-| s2-usb-62M | | | |
-| s2-floop-off | | | |
-| s2-rloop-off | | | |
-| s2-thrash-off | | | |
-| s3-usb-off | | | |
+| s1-usb-off | 176 | 176 | 2880 |
+| s1-usb-25M | 176 | 192 | 2528 |
+| s1-usb-62M | 176 | 192 | 2160 |
+| s1-floop-off | 176 | 192 | 1696 |
+| s1-rloop-off | 176 | 176 | 2528 |
+| s1-thrash-off | 1552 | 1792 | 2720 |
+| s2-usb-off | 176 | 176 | 528 |
+| s2-usb-25M | 176 | 176 | 192 |
+| s2-usb-62M | 176 | 192 | 576 |
+| s2-floop-off | 176 | 176 | 176 |
+| s2-rloop-off | 176 | 176 | 192 |
+| s2-thrash-off | 272 | 560 | 976 |
+| s3-usb-off | 1112 | 1136 | 24576 |
 
-### 5.5 Hypothesis verdicts 【FILL from runner output】
+(all values in ns; calibration baseline 0 counts, σ = 0.00)
+
+### 5.5 Hypothesis verdicts (frozen pre-registration, HYPOTHESES-STUDY.md)
 | ID | Prediction | Measured | Verdict |
 |---|---|---|---|
-| H1a | \|med s2−s1 warm\| ≤ 64 ns | | |
-| H1b | flash cold−warm p95 ≥ +320 ns | | |
-| H1c | SRAM cold−warm p95 ≤ +128 ns | | |
-| H2 | SDK overhead ∈ [320, 3200] ns | | |
-| H6a | capture-62M shifts flash p95 ≥ +160 ns, SRAM ≤ half | | |
-| H6b | co-core flash-loop vs RAM-loop ≥ +96 ns (flash handler) | | |
-| H6c | SRAM median spread across capture ≤ 64 ns | | |
+| H1a | \|med s2−s1 warm\| ≤ 64 ns | +0 ns | CONFIRMED |
+| H1b | flash cold−warm p95 ≥ +320 ns | +1616 ns | CONFIRMED |
+| H1c | SRAM cold−warm p95 ≤ +128 ns | +384 ns | REFUTED |
+| H2 | SDK overhead ∈ [320, 3200] ns | +936 ns | CONFIRMED |
+| H6a | capture-62M shifts flash p95 ≥ +160 ns, SRAM ≤ half | flash +16 ns, SRAM +16 ns | REFUTED |
+| H6b | floop−rloop (flash handler) ≥ +96 ns | +16 ns | REFUTED |
+| H6c | SRAM median spread across capture ≤ 64 ns | 0 ns | CONFIRMED |
 
 Figures: fig_latency.png (demo), fig_uart.png (demo), fig_study.png (study, 2 panels).
 
 ## 6. Discussion
 - **Tails, not averages:** POLL is fastest on median and catastrophic on p95 — the
   project's central teaching result, measured rather than asserted.
-- **Placement is a tail story:** 【FILL: H1a–c interpretation — warm cache hides placement;
-  cold cache exposes it; SRAM's immunity is the real justification for RAM-resident ISRs.】
-- **The observer effect:** 【FILL: H6a/H6b — capture DMA and co-core flash code share the
-  XIP cache and buses with the timed code; SRAM-resident code is the stable reference.】
+- **Placement is a tail story:** with a warm cache the flash- and SRAM-resident handlers are
+  indistinguishable (Δmedian = 0 ns); under cache eviction the flash handler's p95 grows
+  176 → 1792 ns (~10×) while the SRAM handler's grows only to 560 ns. The SRAM handler is
+  nonetheless *not immune* (H1c refuted, +384 ns): the exception-entry trampoline and vector
+  fetch still execute from XIP flash, so SRAM placement protects the handler body but not
+  the entry path. The practical lesson is precise: RAM-resident ISRs are tail-risk
+  mitigation under memory pressure, not a general speed-up.
+- **The observer effect is absent at measured loads — and that validates the method:**
+  capture at 62.5 MS/s (≈62 MB/s of DMA ring writes) and co-core busy-loop placement shift
+  p95 by at most one timer count (16 ns), i.e. below resolution (H6a, H6b refuted). The
+  self-observing instrument is therefore non-invasive at these loads; the only perturbation
+  found is wholesale XIP cache eviction (thrash), i.e. memory-system pressure rather than
+  measurement traffic. A null observer effect is the strongest possible certificate for a
+  self-measurement methodology.
+- **Convenience has a price:** the SDK callback path adds ≈0.94 µs to the median and
+  produced a 24.6 µs outlier — dispatch, event scan and indirect call, all flash-resident.
 - **Limitations:** single architecture and toolchain; digital thresholds only (no analog
   measurements); observed maxima are statistical, not WCET bounds; p99 indicative at
   n = 2000; the thrash condition is a composite (cold cache + contention), pessimistic by
