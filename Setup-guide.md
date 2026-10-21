@@ -1,4 +1,4 @@
-# RUN-S1 — setup, run, test, wiring (the complete checklist)
+# Final guide and checklist — setup, run, test, wiring
 
 ## A. WIRING — read first
 **The 13-cell study needs NO wiring at all.** Every signal path is on-chip.
@@ -78,7 +78,3 @@ Append a RUNLOG line with the date + the seven verdicts.
 | H6a REFUTED with tiny deltas | genuinely no observer effect at these loads | that IS the result — report honestly |
 | thrash FATAL message | array placement | paste output; I fix linker placement |
 | COM error | wrong/stale port | re-run the port lister in C.3 |
-
-## I. THEN
-Paste me the FULL console output (all 13 lines + verdicts). I turn it into the report's
-results chapter (step S2) the same day.
