@@ -1,0 +1,58 @@
+; demo.pio — all PIO programs for selfobs-demo (frozen)
+; Pin map: GP0=STIM out, GP1=RESP (core-1 SIO or fixture), GP0-7 capture window,
+;          GP4 = UART TX (PIO1). Block0: capture+stim+fixture+lattimer = 29/32 instr.
+;          Block1: uarttx = 7/32 instr.
+
+.program demo_capture            ; 1 instr/sample; rate = 125 MHz / clkdiv
+.wrap_target
+    in pins, 8
+.wrap
+
+.program demo_stim               ; period in 2-cycle counts; ~64 ns active pulse
+    pull block
+    mov y, osr
+.wrap_target
+    mov x, y
+    set pins, 1 [7]
+    set pins, 0
+period:
+    jmp x-- period
+    nop
+.wrap
+
+.program demo_fixture            ; GP0+GP1 high in SAME instruction => known delay 0
+    pull block
+    mov y, osr
+.wrap_target
+    mov x, y
+    set pins, 3 [7]
+    set pins, 0
+period:
+    jmp x-- period
+    nop
+.wrap
+
+.program demo_lattimer           ; 16 ns/count; jmp-pin = GP1 (set via sm_config)
+arm:
+    wait 0 gpio 1
+    wait 0 gpio 0
+    mov x, ~null
+    wait 1 gpio 0
+count:
+    jmp pin done
+    jmp x-- count
+done:
+    mov isr, x
+    push block
+    jmp arm
+
+.program demo_uarttx             ; 8N1; 16 SM cycles/bit; clkdiv 814 => 9600.7 baud
+.wrap_target
+    pull block
+    set x, 7
+    set pins, 0 [15]
+bitloop:
+    out pins, 1 [7]
+    jmp x-- bitloop [7]
+    set pins, 1 [15]
+.wrap

@@ -1,0 +1,17 @@
+# build artifacts
+build/
+*.uf2
+*.elf
+*.bin
+*.map
+
+# python
+.venv/
+__pycache__/
+*.pyc
+.pytest_cache/
+
+# run outputs (keep locally; commit summaries manually with git add -f if wanted)
+demo-out/
+study-out/
+wp1-out/
