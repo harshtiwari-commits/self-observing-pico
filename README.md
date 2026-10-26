@@ -48,8 +48,6 @@ known-zero delay as zero, every time.
 | SRAM handler, cache evicted | 272 ns | 560 ns | 976 ns | mitigated, not immune (entry trampoline still XIP) |
 | SDK callback path | 1112 ns | 1136 ns | 24.6 µs | the price of convenience |
 
-Full 13-cell table and hypothesis verdicts: [REPORT-SKELETON.md](REPORT-SKELETON.md) §5.4–5.5
-and `study-out/study_summary.csv`.
 
 ## Novelty & honest positioning
 
@@ -150,8 +148,7 @@ drive; the drive auto-ejects when the flash commits. Firmware announces itself o
 ```powershell
 python host/study_run.py --port COM<x>      # ~4.5 min, 2000 events/cell
 ```
-Outputs: console tables, seven hypothesis verdicts against
-[HYPOTHESES-STUDY.md](HYPOTHESES-STUDY.md), `study-out/study_events.csv`,
+Outputs: console tables, seven hypothesis verdicts against `study-out/study_events.csv`,
 `study-out/study_summary.csv`, `study-out/fig_study.png`. Refutations are valid, reported
 results — the frozen sheet is never adjusted after a run.
 
@@ -184,8 +181,6 @@ Anything else failing: photograph the window; do not debug.
 - **Calibration gate** before every session: fixture median defines the baseline; σ ≤ 2
   counts required, else numbers are flagged indicative.
 - **One variable per comparison**; identical stimulus, timer, handler body.
-- **Pre-registration:** HYPOTHESES-STUDY.md frozen before data collection; verdicts
-  confirmed/refuted symmetrically.
 - **Statistics:** medians and p95 carry verdicts (p95 ≈ 100 samples at n = 2000); p99
   indicative; maxima are *observed maxima*, never bounds (measurement under-approximates
   WCET — Wilhelm et al. 2008).
